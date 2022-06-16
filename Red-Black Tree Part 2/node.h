@@ -31,6 +31,7 @@ class Node{
     void setRight(Node* newRight);
     void setParent(Node* newParent);
     void setValue(int newValue);
+    void setColor(int newColor);
     void setBlack();
     void setRed();
 };

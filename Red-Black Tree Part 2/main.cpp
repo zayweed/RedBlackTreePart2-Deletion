@@ -3,6 +3,7 @@ Zayeed Saffat
 6/14/2022
 This project makes a red-black tree that sorts numbers in a balanced binary search tree. Each node is either red or black and has two children. The program allows you to add numbers from file or user input aswell as display the tree to the terminal.
 Credits to Ruby Amyeen for helping me with the check function with the 'leftRotate' and 'rightRotate' methods.
+Referenced for 'doubleBlack' function: https://www.geeksforgeeks.org/red-black-tree-set-3-delete-2/
 */
 #include <iostream>
 #include <fstream>
@@ -21,6 +22,7 @@ void rightRotate(Node* root, Node* a);
 Node* sibling(Node* current);
 Node* findSuccessor(Node* current);
 void remove(Node* root, Node* v);
+void doubleBlack(Node* root, Node* v);
 
 void display(Node* current, int depth);
 Node* search(Node* root, int value);
@@ -149,39 +151,37 @@ void check(Node* current) {
         } 
     }
 
-    if (current->getParent() == NULL) { //Case 1
-        //cout << "Case 1" << endl;
-        current->setBlack();
+    if (current->getParent() == NULL) { //added to the root
+        current->setBlack(); //root must be black
     } 
 
-    else if (current->getParent()->getColor() == 0) { //Case 2
-        //cout << "Case 2" << endl;
+    else if (current->getParent()->getColor() == 0) { //parent is black
+        //nothing happens
     } 
 
-    else if (uncle != NULL && uncle->getColor() == 1) { //Case 3
-        //cout << "Case 3" << endl;
-        current->getParent()->setBlack();
-        grandparent->setRed();
+    else if (uncle != NULL && uncle->getColor() == 1) { //both parent and uncle are red
+        
+        current->getParent()->setBlack(); //parent and uncle turned black
+        grandparent->setRed(); //grandparent turned red
         uncle->setBlack();
-        check(grandparent);
+        check(grandparent); //recursive call
     } 
 
-    else { //Case 4
-        //cout << "Case 4" << endl;
-        if (current == parent->getRight() && parent == grandparent->getLeft()) {
+    else { //parent is red but uncle isn't or doesn't exist
+        if (current == parent->getRight() && parent == grandparent->getLeft()) { //current is larger than parent
             leftRotate(current, parent);
             current = current->getLeft();
         } 
-        else if (current == parent->getLeft() && parent == grandparent->getRight()) {
+        else if (current == parent->getLeft() && parent == grandparent->getRight()) { //current is smaller than parent
             rightRotate(current, parent);
             current = current->getRight();
         }
         parent = current->getParent(); 
         grandparent = parent->getParent();
-        if (current == parent->getLeft()) {
+        if (current == parent->getLeft()) { //current is smaller than parent
             rightRotate(current, grandparent);
         } 
-        else {
+        else { //current is larger than parent
             leftRotate(current, grandparent);
         }
         parent->setBlack();
@@ -251,7 +251,7 @@ Node* findSuccessor(Node* current) {
     return current;
 }
 
-void remove(Node* root, Node* v) {
+void remove(Node* root, Node* v) { //watch out for issues with root
     Node* u;
 
     if (v->getLeft() != NULL && v->getRight() != NULL)  { //v has two children
@@ -265,12 +265,13 @@ void remove(Node* root, Node* v) {
 
     else if (v->getLeft() == NULL && v->getRight() == NULL)  { //v has no children(is a leaf)
         if (v == root) { //v is root
-            v = NULL;
+            root = NULL;
         }
         else { 
             if (v->getColor() == 0) { //both v and u are black
                 //DOUBLE BLACK
                 cout << "DOUBLE BLACK" << endl;
+                doubleBlack(root, v);
             }
             else { //v is red
                 if (sibling(v) != NULL) {
@@ -310,9 +311,74 @@ void remove(Node* root, Node* v) {
             if (u->getColor() == 0 && v->getColor() == 0) { //both v and u are black
                 //DOUBLE BLACK
                 cout << "DOUBLE BLACK" << endl;
+                doubleBlack(root, u);
             }
             else {
                 u->setBlack();
+            }
+        }
+    }
+}
+
+void doubleBlack(Node* root, Node* v) {
+    if (v == root) { //root has been reached
+        //do nothing
+    }
+
+    else if (sibling(v) == NULL) { //v doesn't have a sibling
+        doubleBlack(root, v->getParent()); //recursive call
+    }
+
+    else {
+        if (sibling(v)->getColor() == 1) { //v has red sibling
+            v->getParent()->setRed();
+            sibling(v)->setBlack();
+            if (sibling(v) == v->getParent()->getLeft()) { //left sibling
+                rightRotate(root, v->getParent());
+            }
+            else { //right sibling
+                leftRotate(root, v->getParent());
+            }
+            doubleBlack(root ,v); //recursive call  
+        }
+
+        else { //v has black sibling
+            if ((sibling(v)->getLeft() != NULL && sibling(v)->getLeft()->getColor() == 1) || (sibling(v)->getLeft() != NULL && sibling(v)->getRight()->getColor() == 1)) { //sibling has at least 1 red child
+                if (sibling(v)->getLeft() != NULL && sibling(v)->getLeft()->getColor() == 1) { //left of sibling is red
+                    if (sibling(v) == v->getParent()->getLeft()) { //sibling is left child
+                        sibling(v)->getLeft()->setColor(sibling(v)->getColor());
+                        sibling(v)->setColor(v->getParent()->getColor());
+                        rightRotate(root, v->getParent());
+                    } 
+                    else { //sibling is right child
+                        sibling(v)->getLeft()->setColor(v->getParent()->getColor());
+                        rightRotate(root, sibling(v));
+                        leftRotate(root, v->getParent());
+                    }
+                } 
+                else { //right of sibling is red
+                    if (sibling(v) == v->getParent()->getLeft()) { ////sibling is left child
+                        sibling(v)->getRight()->setColor(v->getParent()->getColor());
+                        leftRotate(root, sibling(v));
+                        rightRotate(root, v->getParent());
+                    } 
+                    else { //sibling is right child
+                        sibling(v)->getRight()->setColor(sibling(v)->getColor());
+                        sibling(v)->setColor(v->getParent()->getColor());
+                        leftRotate(root, v->getParent());
+                    }
+                }
+                v->getParent()->setBlack();
+            } 
+
+            else { //sibling has two black children
+                sibling(v)->setRed();
+                if (v->getParent()->getColor() == 0) {
+                    doubleBlack(root, v->getParent()); //recursive call
+                }
+                else {
+                    v->getParent()->setBlack();
+                }
             }
         }
     }
@@ -369,3 +435,18 @@ Node* search(Node* root, int value) { //function that searches for a value in th
     }
     return NULL; //if NULL node is reached without finding the value then we know it doesn't exist in the tree
 }
+
+/*
+
+Insert:
+11
+7 3 18 10 22 8 11 26 2 6 13
+
+Remove:
+18
+11
+3
+10
+22
+
+*/

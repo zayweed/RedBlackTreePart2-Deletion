@@ -56,6 +56,9 @@ void Node::setValue(int newValue) {
   value = newValue;
 }
 
+void Node::setColor(int newColor) {
+  color = newColor;
+}
 void Node::setRed() {
   color = 1; //red
 }
