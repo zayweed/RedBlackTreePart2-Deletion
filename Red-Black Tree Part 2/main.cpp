@@ -17,8 +17,13 @@ void add(Node*& root, Node* current, int value);
 void check(Node* current);
 void leftRotate(Node* root, Node* a);
 void rightRotate(Node* root, Node* a);
+
+Node* sibling(Node* current);
+Node* findSuccessor(Node* current);
+void remove(Node* root, Node* v);
+
 void display(Node* current, int depth);
-bool search(Node* root, int value);
+Node* search(Node* root, int value);
 
 int main() {
     Node* root = NULL;  
@@ -72,7 +77,7 @@ int main() {
             cout << "Enter an integer to search for:" << endl;
             int value; cin >> value; 
             
-            if (search(root, value) == true) { //value found in tree
+            if (search(root, value) != NULL) { //value found in tree
                 cout << "Integer is in the tree!" << endl;
             }           
             else { //value not found in tree
@@ -81,10 +86,15 @@ int main() {
         }
 
         if (strcmp(input, "REMOVE") == 0) { //delete an integer from tree
-            cout << "Enter an integer to REMOVE:" << endl;
+            cout << "Enter an integer to remove:" << endl;
             int value; cin >> value;
 
-            //
+            if (search(root, value) != NULL) {
+                remove(root, search(root, value));
+            }
+            else {
+                cout << "Integer is not in the tree!" << endl;
+            }
         }
 
         if (strcmp(input, "QUIT") == 0) { //quit
@@ -221,6 +231,95 @@ void rightRotate(Node* root, Node* a) { //function for right rotate
     a->setParent(b);
 }
 
+//
+
+Node* sibling(Node* current) {
+    if (current == current->getParent()->getLeft()) {
+        return current->getParent()->getRight();
+    }
+    else {
+        return current->getParent()->getLeft();
+    }
+}
+
+Node* findSuccessor(Node* current) {
+    current = current->getRight();
+    while(current->getLeft() != NULL) {
+        current = current->getLeft();
+    }
+
+    return current;
+}
+
+void remove(Node* root, Node* v) {
+    Node* u;
+
+    if (v->getLeft() != NULL && v->getRight() != NULL)  { //v has two children
+        u = findSuccessor(v);
+
+        int temp = v->getValue(); //swap v with u(sucessor)
+        v->setValue(u->getValue());
+        u->setValue(temp);
+        remove(root, u); //recursive call on u
+    } 
+
+    else if (v->getLeft() == NULL && v->getRight() == NULL)  { //v has no children(is a leaf)
+        if (v == root) { //v is root
+            v = NULL;
+        }
+        else { 
+            if (v->getColor() == 0) { //both v and u are black
+                //DOUBLE BLACK
+                cout << "DOUBLE BLACK" << endl;
+            }
+            else { //v is red
+                if (sibling(v) != NULL) {
+                    sibling(v)->setRed();
+                }
+            }
+            if (v == v->getParent()->getLeft()) { //remove v from tree
+                v->getParent()->setLeft(NULL);
+            }
+            else {
+                v->getParent()->setRight(NULL);
+            }
+        }
+    } 
+
+    else { //v has one child
+        if (v->getLeft() != NULL) { //v has left child
+            u = v->getLeft();
+        }
+        else { //v has right child
+            u = v->getRight();
+        }
+
+        if (v == root) { //v is root
+            v->setValue(u->getValue());
+            v->setLeft(NULL); 
+            v->setRight(NULL);
+        }
+        else { 
+            if (v->getLeft() != NULL) { //replace v with u
+                v->getParent()->setLeft(u);
+            }
+            else { //replace v with u
+                v->getParent()->setRight(u);
+            }
+            u->setParent(v->getParent());
+            if (u->getColor() == 0 && v->getColor() == 0) { //both v and u are black
+                //DOUBLE BLACK
+                cout << "DOUBLE BLACK" << endl;
+            }
+            else {
+                u->setBlack();
+            }
+        }
+    }
+}
+
+//
+
 void display(Node* current, int depth) { //function that displays tree
     if (current == NULL) { //if tree is empty and head is NULL exit function
         return;
@@ -255,7 +354,7 @@ void display(Node* current, int depth) { //function that displays tree
     }
 }
 
-bool search(Node* root, int value) { //function that searches for a value in the tree
+Node* search(Node* root, int value) { //function that searches for a value in the tree
     Node* current = root;
     while (current != NULL) {
         if (value < current->getValue()) { //if value is less than current go left
@@ -265,8 +364,8 @@ bool search(Node* root, int value) { //function that searches for a value in the
             current = current->getRight();
         }
         else if (value == current->getValue()) { //value is found and true is returned
-            return true;
+            return current;
         }
     }
-    return false; //if NULL node is reached without finding the value then we know it doesn't exist in the tree
+    return NULL; //if NULL node is reached without finding the value then we know it doesn't exist in the tree
 }
