@@ -270,7 +270,7 @@ void remove(Node* root, Node* v) { //watch out for issues with root
         else { 
             if (v->getColor() == 0) { //both v and u are black
                 //DOUBLE BLACK
-                cout << "DOUBLE BLACK" << endl;
+                cout << "DOUBLE BLACK(v)" << endl;
                 doubleBlack(root, v);
             }
             else { //v is red
@@ -301,7 +301,7 @@ void remove(Node* root, Node* v) { //watch out for issues with root
             v->setRight(NULL);
         }
         else { 
-            if (v->getLeft() != NULL) { //replace v with u
+            if (v == v->getParent()->getLeft()) { //replace v with u
                 v->getParent()->setLeft(u);
             }
             else { //replace v with u
@@ -310,7 +310,7 @@ void remove(Node* root, Node* v) { //watch out for issues with root
             u->setParent(v->getParent());
             if (u->getColor() == 0 && v->getColor() == 0) { //both v and u are black
                 //DOUBLE BLACK
-                cout << "DOUBLE BLACK" << endl;
+                cout << "DOUBLE BLACK(u)" << endl;
                 doubleBlack(root, u);
             }
             else {
@@ -435,18 +435,3 @@ Node* search(Node* root, int value) { //function that searches for a value in th
     }
     return NULL; //if NULL node is reached without finding the value then we know it doesn't exist in the tree
 }
-
-/*
-
-Insert:
-11
-7 3 18 10 22 8 11 26 2 6 13
-
-Remove:
-18
-11
-3
-10
-22
-
-*/
