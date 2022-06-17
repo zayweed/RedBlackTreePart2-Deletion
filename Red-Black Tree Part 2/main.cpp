@@ -93,6 +93,9 @@ int main() {
 
             if (search(root, value) != NULL) {
                 remove(root, search(root, value));
+                while (root->getParent() != NULL) { //reset root
+                    root = root->getParent();
+                }
             }
             else {
                 cout << "Integer is not in the tree!" << endl;
